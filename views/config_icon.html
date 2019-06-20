@@ -1,0 +1,450 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Data manipulation - ICON</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="../layuiadmin/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="../layuiadmin/style/admin.css" media="all">
+  <script src="../javascripts/jquery.js"></script>
+</head>
+<body>
+
+  <div class="layui-card layadmin-header">
+    <!--<div class="layui-breadcrumb" lay-filter="breadcrumb">
+      <a lay-href="">主页</a>
+      <a><cite>组件</cite></a>
+      <a><cite>数据表格</cite></a>
+      <a><cite>数据操作</cite></a>
+    </div>-->
+  </div>
+  
+  <div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+      <div class="layui-col-md12">
+        <div class="layui-card">
+          <div class="layui-card-header">Data manipulation</div>
+          <div class="layui-card-body">
+            <!--<div class="layui-btn-group test-table-operate-btn" style="margin-bottom: 10px;">
+              <button class="layui-btn" data-type="getCheckData">获取选中行数据</button>
+              <button class="layui-btn" data-type="getCheckLength">获取选中数目</button>
+              <button class="layui-btn" data-type="isAll">验证是否全选</button>
+            </div>-->
+
+
+            <div class="test-table-reload-btn" style="margin-bottom: 10px;">
+
+              Search Name：
+              <div class="layui-inline">
+                <input class="layui-input" name="name" id="test-table-demoReload" autocomplete="off">
+              </div>
+              <button class="layui-btn layui-btn-normal search" data-type="reload">Search</button>
+              <button class="layui-btn layui-btn-normal  add">Add</button>
+            </div>
+            
+            <table class="layui-hide" id="test-table-operate" lay-filter="test-table-operate"></table>
+            
+            <script type="text/html" id="test-table-operate-barDemo">
+              <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">View</a>
+              <a class="layui-btn layui-btn-xs" lay-event="edit">Edit</a>
+              <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">Delete</a>
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../layuiadmin/layui/layui.js"></script>
+  <script src="../javascripts/icon.js"></script>
+  <script>
+
+  layui.config({
+    base: '../layuiadmin/' //静态资源所在路径
+  }).extend({
+    index: 'lib/index' //主入口模块
+  }).use(['index', 'table','form','upload'], function(){
+      var _index = layer.load();
+    var table = layui.table
+    ,admin = layui.admin
+        ,element = layui.element
+        ,form = layui.form;
+    var upload = layui.upload;
+      form.render(null, 'component-form-element');
+      form.render(null, 'component-form-element-addpost');
+
+      element.render('breadcrumb', 'breadcrumb');
+
+
+      form.on('submit(component-form-element)', function(data){
+          if(data.form) {
+              let icon = new ICON(data.field);
+              console.dir(data)
+              icon.update_icon((cbdata) => {
+                  if (cbdata) {
+                      layer.msg('Data modification success');
+                      layer.close(Number($('.layui-layer').attr('times')));
+                      table.reload('test-table-operate', {});
+
+                  } else {
+                      layer.msg('Data modification failure');
+                  }
+              });
+          }else{
+              layer.close(Number($('.layui-layer').attr('times')));
+          }
+          return false;
+      });
+
+      form.on('submit(component-form-element-addpost)', function(data){
+          if(data.form) {
+              let icon = new ICON(data.field);
+              console.dir(data)
+              icon.save_icon((cbdata) => {
+                  if (cbdata) {
+                      layer.msg('Data Add success');
+                      layer.close(Number($('.layui-layer').attr('times')));
+                      table.reload('test-table-operate', {});
+
+                  } else {
+                      layer.msg('Data Add failure');
+                  }
+              });
+          }else{
+              layer.close(Number($('.layui-layer').attr('times')));
+          }
+
+          return false;
+      });
+  
+    table.render({
+      elem: '#test-table-operate'
+      /*,url: layui.setter.base + 'json/table/user.js'*/
+        ,url: '/icon_select'
+        ,method: 'post'
+     /* ,width: admin.screen() > 1 ? 892 : ''*/
+      ,height: 600
+      ,limit:10
+      ,limits:[2,5,10,20,30,40,50,100]
+      ,cols: [[
+        /*{type:'checkbox', fixed: 'left'}
+        ,*/
+         {field:'id', width:67, title: 'ID', sort: true, fixed: 'left'}
+        ,{field:'name', title: 'Name', sort: true}
+        ,{field:'description', title: 'Descripiton'}
+        ,{field:'url', title: 'Url'}
+        /*,{field:'reid', title: 'Reid', sort: true}
+        ,{field:'fid', title: 'Fid', sort: true}*/
+        ,{width:178, align:'center', fixed: 'right', toolbar: '#test-table-operate-barDemo'}
+      ]]
+      ,page: true
+        ,done: function(res, curr, count){
+            //如果是异步请求数据方式，res即为你接口返回的信息。
+            //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+            console.log(res);
+            //得到当前页码
+            console.log(curr);
+            //得到数据总量
+            console.log(count);
+            layer.close(_index);
+        }
+    });
+    
+ /*   //监听表格复选框选择
+    table.on('checkbox(test-table-operate)', function(obj){
+      console.log(obj)
+    });*/
+    //监听工具条
+    table.on('tool(test-table-operate)', function(obj){
+      var data = obj.data;
+      if(obj.event === 'detail'){
+
+        //layer.msg('ID：'+ data.id + ' 的查看操作');
+
+         var _msg = '            <form class="layui-form" action="" lay-filter="component-form-element">' +
+          '              <div class="layui-row layui-col-space10 layui-form-item">' +
+          '                <div class="">' +
+          '                  <label class="layui-form-label">ID：</label>' +
+          '                  <div class="layui-input-block">' +
+          '                    <input type="text" name="fullname" lay-verify="required" placeholder="" autocomplete="off" class="layui-input layui-bg-gray" readonly="readonly" value="'+data.id+'">' +
+          '                  </div>' +
+          '                </div>' +
+          '              </div>' +
+             '              <div class="layui-row layui-col-space10 layui-form-item">' +
+             '                <div class="">' +
+             '                  <label class="layui-form-label">Name：</label>' +
+             '                  <div class="layui-input-block">' +
+             '                    <input type="text" name="fullname" lay-verify="required" placeholder="" autocomplete="off" class="layui-input layui-bg-gray" readonly="readonly" value="'+data.name+'">' +
+             '                  </div>' +
+             '                </div>' +
+             '              </div>' +
+             '              <div class="layui-row layui-col-space10 layui-form-item">' +
+             '                <div class="">' +
+             '                  <label class="layui-form-label descripiton">Descripiton：</label>' +
+             '                  <div class="layui-input-block">' +
+             '                    <input type="text" name="fullname" lay-verify="required" placeholder="" autocomplete="off" class="layui-input layui-bg-gray" readonly="readonly" value="'+data.description+'">' +
+             '                  </div>' +
+             '                </div>' +
+             '              </div>' +
+
+             '              <div class="layui-row layui-col-space10 layui-form-item">' +
+             '                <div class="">' +
+             '                  <label class="layui-form-label">Url：</label>' +
+             '                  <div class="layui-input-block">' +
+             '                    <input type="text" name="fullname" lay-verify="required" placeholder="" autocomplete="off" class="layui-input layui-bg-gray" readonly="readonly" value="'+data.url+'">' +
+             '                  </div>' +
+             '                </div>' +
+             '              </div>' +
+          /*'              <div class="layui-form-item">' +
+          '                <div class="layui-input-block">' +
+          '                  <button class="layui-btn" lay-submit lay-filter="component-form-element">立即提交</button>' +
+          '                  <button type="reset" class="layui-btn layui-btn-primary">重置</button>' +
+          '                </div>' +
+          '              </div>' +*/
+          '            </form>';
+          layer.open({
+              type: 0,
+              title: ['ICON Data', 'font-size:18px;'],
+            btn: ['Cancel'],
+              area: '500px',
+              content: _msg //这里content是一个普通的String
+          });
+          form.render();
+          //layer.msg(_msg);
+      } else if(obj.event === 'del'){
+        layer.confirm('Do you really delete the line', function(index){
+            let icon = new ICON(obj.data);
+            icon.delete_icon((cbdata)=>{
+                if(cbdata){
+                    layer.msg('Data delete success');
+                    table.reload('test-table-operate', {});
+                    obj.del();
+                }else{
+                    layer.msg('Data delete failure');
+                }
+            });
+          layer.close(index);
+        });
+      } else if(obj.event === 'edit'){
+          var _msg = '            <form class="layui-form" action="" method="post" lay-filter="component-form-element">' +
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label">ID：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="id" lay-verify="required" placeholder="" autocomplete="off" class="layui-input layui-bg-gray" readonly="readonly" value="'+data.id+'">' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label">Name：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="name" lay-verify="required" placeholder="" autocomplete="off" class="layui-input" value="'+data.name+'">' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label descripiton">Descripiton：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="description" lay-verify="required" placeholder="" autocomplete="off" class="layui-input" value="'+data.description+'">' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label">Url：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="url" lay-verify="required" placeholder="" autocomplete="off" class="layui-input" value="'+data.url+'">' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+
+            '              <div class="layui-row layui-col-space10 layui-form-item">' +
+            '<div class="layui-upload" style="float: right;">\n' +
+            '  <button type="button" class="layui-btn" id="test1">UPLOAD</button>\n' +
+            '  <div class="layui-upload-list">\n' +
+            '    <img class="layui-upload-img" id="demo1" style="height: 5rem;">\n' +
+            '    <p id="demoText"></p>\n' +
+            '  </div>\n' +
+            '</div>   '+
+            '              </div>' +
+
+              '              <div class="layui-form-item">' +
+              '                <div class="layui-input-block">' +
+              '                  <button class="layui-btn submission" lay-submit lay-filter="component-form-element">Save</button>' +
+              '                  <button type="reset" class="layui-btn layui-btn-primary reset">Reset</button>' +
+              '                  <button type="cancel" class="layui-btn layui-btn-primary cancel">Cancel</button>' +
+              '                </div>' +
+              '              </div>' +
+              '            </form>';
+          layer.open({
+              type: 0,
+              title: ['ICON Data', 'font-size:18px;'],
+              area: '550px',
+              btn: ['Cancel'],
+              /*btn: ['按钮一', '按钮二', '按钮三'],
+              yes: function(index, layero){
+                  console.dir(index)
+                  console.dir(layero)
+              //按钮【按钮一】的回调
+              },
+              btn2: function(index, layero){
+              //按钮【按钮二】的回调
+
+              //return false 开启该代码可禁止点击该按钮关闭
+              },*/
+              content: _msg //这里content是一个普通的String
+          });
+          form.render();
+        //layer.alert('编辑行：<br>'+ JSON.stringify(data))
+      }
+      var uploadInst = upload.render({
+        elem: '#test1'
+        ,url: '/upload/'
+        ,before: function(obj){
+          //预读本地文件示例，不支持ie8
+          obj.preview(function(index, file, result){
+            $('#demo1').attr('src', result); //图片链接（base64）
+          });
+        }
+        ,done: function(res){
+          //如果上传失败
+          console.dir(res)
+          if(res.code > 0){
+            //return layer.msg('上传失败');
+            $("input[name='url']").val(res.imageURL);
+          }
+          //上传成功
+        }
+        ,error: function(){
+          //演示失败状态，并实现重传
+
+        }
+      });
+    });
+    
+    var $ = layui.$, active = {
+      reload: function(){
+            var demoReload = $('#test-table-demoReload');
+            //执行重载
+            table.reload('test-table-operate', {
+                page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+                ,where: {
+                    key: {
+                        name: demoReload.val()
+                    }
+                }
+            });
+      },
+     /* getCheckData: function(){ //获取选中数据
+        var checkStatus = table.checkStatus('test-table-operate')
+        ,data = checkStatus.data;
+        layer.alert(JSON.stringify(data));
+      }
+      ,getCheckLength: function(){ //获取选中数目
+        var checkStatus = table.checkStatus('test-table-operate')
+        ,data = checkStatus.data;
+        layer.msg('选中了：'+ data.length + ' 个');
+      }
+      ,isAll: function(){ //验证是否全选
+        var checkStatus = table.checkStatus('test-table-operate');
+        layer.msg(checkStatus.isAll ? '全选': '未全选')
+      }*/
+    };
+
+      $('.test-table-reload-btn .search').on('click', function(){
+          var type = $(this).data('type');
+          active[type] ? active[type].call(this) : '';
+      });
+
+      $('.test-table-reload-btn .add').on('click', function(){
+          var _msg = '            <form class="layui-form" action="" method="post" lay-filter="component-form-element-addpost">' +
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label">Name：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="name" lay-verify="required" placeholder="" autocomplete="off" class="layui-input" >' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label descripiton">Descripiton：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="description" lay-verify="required" placeholder="" autocomplete="off" class="layui-input" >' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+
+              '              <div class="layui-row layui-col-space10 layui-form-item">' +
+              '                <div class="">' +
+              '                  <label class="layui-form-label">Url：</label>' +
+              '                  <div class="layui-input-block">' +
+              '                    <input type="text" name="url" lay-verify="required" placeholder="" autocomplete="off" class="layui-input" >' +
+              '                  </div>' +
+              '                </div>' +
+              '              </div>' +
+
+            '              <div class="layui-row layui-col-space10 layui-form-item">' +
+            '<div class="layui-upload" style="float: right;">\n' +
+            '  <button type="button" class="layui-btn" id="test1">UPLOAD</button>\n' +
+            '  <div class="layui-upload-list">\n' +
+            '    <img class="layui-upload-img" id="demo1" style="height: 5rem;">\n' +
+            '    <p id="demoText"></p>\n' +
+            '  </div>\n' +
+            '</div>   '+
+            '              </div>' +
+
+              '              <div class="layui-form-item">' +
+              '                <div class="layui-input-block">' +
+              '                  <button class="layui-btn addpost" lay-submit lay-filter="component-form-element-addpost">Add</button>' +
+              '                  <button type="reset" class="layui-btn layui-btn-primary">Reset</button>' +
+              '                  <button type="cancel" class="layui-btn layui-btn-primary cancel">Cancel</button>' +
+              '                </div>' +
+              '              </div>' +
+              '            </form>';
+          layer.open({
+              type: 0,
+              title: ['ICON Data', 'font-size:18px;'],
+              area: '550px',
+            btn: ['Cancel'],
+              content: _msg //这里content是一个普通的String
+          });
+          form.render();
+        var uploadInst = upload.render({
+          elem: '#test1'
+          ,url: '/upload/'
+          ,before: function(obj){
+            //预读本地文件示例，不支持ie8
+            obj.preview(function(index, file, result){
+              $('#demo1').attr('src', result); //图片链接（base64）
+            });
+          }
+          ,done: function(res){
+            //如果上传失败
+            console.dir(res)
+            if(res.code > 0){
+              //return layer.msg('上传失败');
+              $("input[name='url']").val(res.imageURL);
+            }
+            //上传成功
+          }
+          ,error: function(){
+            //演示失败状态，并实现重传
+
+          }
+        });
+      });
+  
+  });
+  </script>
+</body>
+</html>
